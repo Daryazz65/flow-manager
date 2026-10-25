@@ -3,8 +3,10 @@ package com.example.flow_manager.controller;
 import com.example.flow_manager.dto.ApiError;
 import com.example.flow_manager.exception.FileNotReadyException;
 import com.example.flow_manager.exception.FileProcessingNotFoundException;
+import com.example.flow_manager.exception.FileSizeLimitExceededException;
 import com.example.flow_manager.exception.FileUploadException;
 import com.example.flow_manager.exception.FlowManagerException;
+import com.example.flow_manager.exception.SubscriptionServiceException;
 import java.time.Instant;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,26 @@ public class ApiExceptionHandler {
             FileUploadException exception
     ) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    @ExceptionHandler(FileSizeLimitExceededException.class)
+    public ResponseEntity<ApiError> handleFileSizeLimit(
+            FileSizeLimitExceededException exception
+    ) {
+        return buildResponse(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(SubscriptionServiceException.class)
+    public ResponseEntity<ApiError> handleSubscriptionService(
+            SubscriptionServiceException exception
+    ) {
+        return buildResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                exception.getMessage()
+        );
     }
 
     @ExceptionHandler(FlowManagerException.class)

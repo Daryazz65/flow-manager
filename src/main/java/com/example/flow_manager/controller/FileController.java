@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,9 +31,13 @@ public class FileController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FileUploadResponse> upload(
+            @RequestHeader("X-User-Login") String userLogin,
             @RequestPart("file") MultipartFile file
     ) {
-        FileUploadResponse response = fileProcessingService.upload(file);
+        FileUploadResponse response = fileProcessingService.upload(
+                userLogin,
+                file
+        );
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }

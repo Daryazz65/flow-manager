@@ -3,6 +3,7 @@ package com.example.flow_manager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -23,6 +24,13 @@ public abstract class AbstractIT {
                     DockerImageName.parse("apache/kafka-native:3.8.0")
             );
 
+    @Container
+    static final GenericContainer<?> REDIS =
+            new GenericContainer<>(
+                    DockerImageName.parse("redis:7.4-alpine")
+            )
+                    .withExposedPorts(6379);
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add(
@@ -40,6 +48,14 @@ public abstract class AbstractIT {
         registry.add(
                 "spring.kafka.bootstrap-servers",
                 KAFKA::getBootstrapServers
+        );
+        registry.add(
+                "spring.data.redis.host",
+                REDIS::getHost
+        );
+        registry.add(
+                "spring.data.redis.port",
+                () -> REDIS.getMappedPort(6379)
         );
         registry.add(
                 "eureka.client.enabled",
