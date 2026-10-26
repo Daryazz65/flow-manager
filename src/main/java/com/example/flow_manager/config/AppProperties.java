@@ -26,7 +26,8 @@ public record AppProperties(
     }
 
     public record Subscription(
-            String cacheName
+            String cacheName,
+            String consumerGroup
     ) {
     }
 

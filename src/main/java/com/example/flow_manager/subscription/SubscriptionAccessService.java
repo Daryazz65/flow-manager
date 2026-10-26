@@ -3,9 +3,7 @@ package com.example.flow_manager.subscription;
 import com.example.flow_manager.dto.SubscriptionLimitResponse;
 import com.example.flow_manager.exception.FileSizeLimitExceededException;
 import com.example.flow_manager.exception.SubscriptionServiceException;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -13,7 +11,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class SubscriptionAccessService {
 
-    private final SubscriptionClient subscriptionClient;
+    private final SubscriptionCacheService subscriptionCacheService;
 
     public void validateUpload(String userLogin, long fileSize) {
         if (!StringUtils.hasText(userLogin)) {
@@ -22,26 +20,12 @@ public class SubscriptionAccessService {
             );
         }
 
-        SubscriptionLimitResponse subscription = getLimit(userLogin);
+        SubscriptionLimitResponse subscription =
+                subscriptionCacheService.getLimit(userLogin);
 
         if (fileSize > subscription.maxFileSizeBytes()) {
             throw new FileSizeLimitExceededException(
                     subscription.maxFileSizeBytes()
-            );
-        }
-    }
-
-    @Cacheable(
-            cacheNames = "subscription-limits",
-            key = "#userLogin"
-    )
-    public SubscriptionLimitResponse getLimit(String userLogin) {
-        try {
-            return subscriptionClient.getLimit(userLogin);
-        } catch (FeignException exception) {
-            throw new SubscriptionServiceException(
-                    "Cannot obtain subscription information for user: " + userLogin,
-                    exception
             );
         }
     }

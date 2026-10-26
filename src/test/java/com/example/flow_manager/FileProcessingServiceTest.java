@@ -95,7 +95,8 @@ class FileProcessingServiceTest {
                         "subscription.changed"
                 ),
                 new AppProperties.Subscription(
-                        "subscription-limits"
+                        "subscription-limits",
+                        "flow-manager-subscription-cache"
                 ),
                 new AppProperties.Outbox(1000, 100)
         );

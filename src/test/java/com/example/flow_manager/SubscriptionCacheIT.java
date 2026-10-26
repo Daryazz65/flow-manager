@@ -9,7 +9,7 @@ import com.example.flow_manager.domain.SubscriptionType;
 import com.example.flow_manager.dto.SubscriptionChangedEvent;
 import com.example.flow_manager.dto.SubscriptionLimitResponse;
 import com.example.flow_manager.messaging.SubscriptionChangedListener;
-import com.example.flow_manager.subscription.SubscriptionAccessService;
+import com.example.flow_manager.subscription.SubscriptionCacheService;
 import com.example.flow_manager.subscription.SubscriptionClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,15 +19,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 
 class SubscriptionCacheIT extends AbstractIT {
 
     private static final String USER_LOGIN = "test-user";
 
     @Autowired
-    private SubscriptionAccessService subscriptionAccessService;
+    private SubscriptionCacheService subscriptionCacheService;
 
     @Autowired
     private SubscriptionChangedListener subscriptionChangedListener;
@@ -35,19 +33,12 @@ class SubscriptionCacheIT extends AbstractIT {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private CacheManager cacheManager;
-
     @MockBean
     private SubscriptionClient subscriptionClient;
 
     @BeforeEach
     void clearCache() {
-        Cache cache = cacheManager.getCache("subscription-limits");
-
-        if (cache != null) {
-            cache.clear();
-        }
+        subscriptionCacheService.evict(USER_LOGIN);
     }
 
     @Test
@@ -56,12 +47,10 @@ class SubscriptionCacheIT extends AbstractIT {
 
         when(subscriptionClient.getLimit(USER_LOGIN)).thenReturn(expected);
 
-        SubscriptionLimitResponse first = subscriptionAccessService.getLimit(
-                USER_LOGIN
-        );
-        SubscriptionLimitResponse second = subscriptionAccessService.getLimit(
-                USER_LOGIN
-        );
+        SubscriptionLimitResponse first =
+                subscriptionCacheService.getLimit(USER_LOGIN);
+        SubscriptionLimitResponse second =
+                subscriptionCacheService.getLimit(USER_LOGIN);
 
         assertThat(first).isEqualTo(expected);
         assertThat(second).isEqualTo(expected);
@@ -76,20 +65,20 @@ class SubscriptionCacheIT extends AbstractIT {
 
         when(subscriptionClient.getLimit(USER_LOGIN)).thenReturn(expected);
 
-        subscriptionAccessService.getLimit(USER_LOGIN);
+        subscriptionCacheService.getLimit(USER_LOGIN);
 
         SubscriptionChangedEvent event = new SubscriptionChangedEvent(
                 UUID.randomUUID(),
                 USER_LOGIN,
                 SubscriptionType.FREE,
-                null
+                Instant.now()
         );
 
         subscriptionChangedListener.handle(
                 objectMapper.writeValueAsString(event)
         );
 
-        subscriptionAccessService.getLimit(USER_LOGIN);
+        subscriptionCacheService.getLimit(USER_LOGIN);
 
         verify(subscriptionClient, times(2)).getLimit(USER_LOGIN);
     }

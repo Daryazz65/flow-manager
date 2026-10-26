@@ -70,6 +70,7 @@ app:
 
   subscription:
     cache-name: subscription-limits
+    consumer-group: flow-manager-subscription-cache
 
   outbox:
     fixed-delay: 1000
