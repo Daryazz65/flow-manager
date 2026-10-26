@@ -13,15 +13,21 @@ public class KafkaTopicsConfig {
 
     @Bean
     public NewTopic conversionRequestedTopic(AppProperties properties) {
-        return TopicBuilder.name(properties.topics().conversionRequested())
-                .partitions(PARTITIONS)
-                .replicas(REPLICAS)
-                .build();
+        return createTopic(properties.topics().conversionRequested());
     }
 
     @Bean
     public NewTopic conversionResultTopic(AppProperties properties) {
-        return TopicBuilder.name(properties.topics().conversionResult())
+        return createTopic(properties.topics().conversionResult());
+    }
+
+    @Bean
+    public NewTopic subscriptionChangedTopic(AppProperties properties) {
+        return createTopic(properties.topics().subscriptionChanged());
+    }
+
+    private NewTopic createTopic(String name) {
+        return TopicBuilder.name(name)
                 .partitions(PARTITIONS)
                 .replicas(REPLICAS)
                 .build();

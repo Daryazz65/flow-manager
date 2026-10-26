@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record AppProperties(
         Minio minio,
         Topics topics,
+        Subscription subscription,
         Outbox outbox
 ) {
 
@@ -19,7 +20,14 @@ public record AppProperties(
 
     public record Topics(
             String conversionRequested,
-            String conversionResult
+            String conversionResult,
+            String subscriptionChanged
+    ) {
+    }
+
+    public record Subscription(
+            String cacheName,
+            String consumerGroup
     ) {
     }
 

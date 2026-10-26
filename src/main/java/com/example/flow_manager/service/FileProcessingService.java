@@ -22,6 +22,7 @@ import com.example.flow_manager.repository.FileProcessingRepository;
 import com.example.flow_manager.repository.OutboxMessageRepository;
 import com.example.flow_manager.repository.ProcessedMessageRepository;
 import com.example.flow_manager.storage.ObjectStorage;
+import com.example.flow_manager.subscription.SubscriptionAccessService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -45,10 +46,15 @@ public class FileProcessingService {
     private final ObjectStorage storage;
     private final ObjectMapper objectMapper;
     private final AppProperties properties;
+    private final SubscriptionAccessService subscriptionAccessService;
 
     @Transactional
-    public FileUploadResponse upload(MultipartFile file) {
+    public FileUploadResponse upload(
+            String userLogin,
+            MultipartFile file
+    ) {
         validateFile(file);
+        subscriptionAccessService.validateUpload(userLogin, file.getSize());
 
         UUID fileId = UUID.randomUUID();
         String fileName = extractFileName(file.getOriginalFilename());
@@ -117,7 +123,11 @@ public class FileProcessingService {
 
         FileProcessing fileProcessing = fileProcessingRepository
                 .findByIdForUpdate(event.sourceEventId())
-                .orElseThrow(() -> new FileProcessingNotFoundException(event.sourceEventId()));
+                .orElseThrow(
+                        () -> new FileProcessingNotFoundException(
+                                event.sourceEventId()
+                        )
+                );
 
         if (fileProcessing.getStatus() == ProcessingStatus.PROCESSING) {
             if (event.status() == ConversionResultStatus.SUCCESS) {
@@ -190,7 +200,9 @@ public class FileProcessingService {
 
     private String extractFileName(String fileName) {
         try {
-            String normalizedFileName = Path.of(fileName).getFileName().toString();
+            String normalizedFileName = Path.of(fileName)
+                    .getFileName()
+                    .toString();
 
             if (normalizedFileName.isBlank()) {
                 throw new FileUploadException("File name must not be empty");
@@ -210,7 +222,10 @@ public class FileProcessingService {
         try {
             return file.getBytes();
         } catch (IOException exception) {
-            throw new FileUploadException("Cannot read uploaded file", exception);
+            throw new FileUploadException(
+                    "Cannot read uploaded file",
+                    exception
+            );
         }
     }
 
